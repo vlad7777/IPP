@@ -50,7 +50,7 @@ command* parse_command() {
 		int cur = atoi(nxt);	
 		ret->data[ind++] = cur;
 	}
-	print_command(ret);
+	//print_command(ret);
 
 	return ret;
 }

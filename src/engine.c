@@ -58,8 +58,8 @@ Board* constructBoard(int n, int maxMoves)
 	ret->size = n;
 	ret->piecesList = 0;
 	ret->maxMoves = maxMoves;
-	ret->currentMove = 0;
-	ret->currentPlayer = 0;
+	ret->currentMove = 1;
+	ret->currentPlayer = 1;
 	return ret;
 }
 
@@ -85,17 +85,17 @@ char pieceToChar(Piece *piece)
 		return '.';
 	char conv[] = ".rkc";
 	char ret = conv[piece->type];
-	if (piece->team == 0)
-		ret = tolower(ret);
+	if (piece->team == 1)
+		ret = toupper(ret);
 	return ret;
 }
 
 void print_topleft() 
 {
-	for (int i = 0; i < 10; i++)
+	for (int i = 1; i <= min(10, board->size); i++)
 	{
-		for (int j = 0; j < 10; j++)
-			printf("%c", pieceToChar(getPiece(board, i, j)));
+		for (int j = 1; j <= min(10, board->size); j++)
+			printf("%c", pieceToChar(getPiece(board, j, i)));
 		printf("\n");
 	}
 }
@@ -176,26 +176,18 @@ int init(int n, int k, int p, int x1, int y1, int x2, int y2)
 	if (board == 0)
 	{
 		board = constructBoard(n, k);
-		if (!setupLine(board, x1, y1, p))
+		if (!setupLine(board, x1, y1, 1))
 			return 0;
-		
-		p++;
-		if (p == 3)
-			p = 2;
 
-		if (!setupLine(board, x2, y2, p))
+		if (!setupLine(board, x2, y2, 2))
 			return 0;
 	}
 	else 
 	{
-		if (!checkSetupLine(board, x1, y1, p))
+		if (!checkSetupLine(board, x1, y1, 1))
 			return 0;
 
-		p++;
-		if (p == 3)
-			p = 2;
-
-		if (!checkSetupLine(board, x2, y2, p))
+		if (!checkSetupLine(board, x2, y2, 2))
 			return 0;
 	}
 	return 1;
@@ -250,6 +242,8 @@ void deleteList(PiecesList *list)
 
 void deleteBoard() 
 {
+	if (board == 0)
+		return;
 	deleteList(board->piecesList);
 	free(board);
 }
