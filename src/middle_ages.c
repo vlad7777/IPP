@@ -6,26 +6,57 @@
 
 int main() {
 
-    start_game();
+	start_game();
 
-    command *new_command;
-    while (1) {
-        new_command = parse_command();
+	command *new_command;
+	while (1) {
+		new_command = parse_command();
+		break;
 
-        if (strcmp(new_command->name, "INIT") == 0) {
-            init(new_command->data[0],
-                 new_command->data[1],
-                 new_command->data[2],
-                 new_command->data[3],
-                 new_command->data[4],
-                 new_command->data[5],
-                 new_command->data[6]);
-        }
+		if (strcmp(new_command->name, "INIT") == 0) 
+		{
+			init(new_command->data[0],
+					new_command->data[1],
+					new_command->data[2],
+					new_command->data[3],
+					new_command->data[4],
+					new_command->data[5],
+					new_command->data[6]);
+		}
+		else if (strcmp(new_command->name, "MOVE") == 0) 
+		{
+			move(new_command->data[0],
+					new_command->data[1],
+					new_command->data[2],
+					new_command->data[3]);	
+		}
+		else if (strcmp(new_command->name, "PRODUCE_KNIGHT") == 0)
+		{
+			produce_knight(new_command->data[0],
+					new_command->data[1],
+					new_command->data[2],
+					new_command->data[3]);	
+		}
+		else if (strcmp(new_command->name, "PRODUCE_PEASANT") == 0)
+		{
+			produce_peasant(new_command->data[0],
+					new_command->data[1],
+					new_command->data[2],
+					new_command->data[3]);	
+		}
+		else if (strcmp(new_command->name, "END_TURN") == 0)
+		{
+			end_turn();
+		}
+		else
+		{
+			
+		}
 
-        print_topleft();
-    }
+		print_topleft();
+	}
 
-    end_game();
+	end_game();
 
-    return 0;
+	return 0;
 }
