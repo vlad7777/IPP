@@ -1,7 +1,4 @@
-#!/bin/bash -x
-
-rm ai1.input
-rm ai2.input
+#/bin/bash -x
 
 GUI_PATH=./sredniowiecze_gui_with_libs.sh
 
@@ -151,9 +148,10 @@ exec 8<>$PIPE
 rm $PIPE
 
 if [[ "$ai1" == "" && "$ai2" == "" ]]; then
-	$GUI_PATH -human1 -human2 <&7 >&8 & 
+	$GUI_PATH -human1 -human2 <&7 >&8 &
 	pid_gui=$!
 
+	echo "-human1 -human2" >> gui.args
 	echo "INIT $boardSize $turnsNumber 1 $x1 $y1 $x2 $y2">&7
 	echo "INIT $boardSize $turnsNumber 2 $x1 $y1 $x2 $y2">&7
 
@@ -187,61 +185,64 @@ elif [[ "$ai1" != "" && "$ai2" != "" ]]; then
 	echo "INIT $boardSize $turnsNumber 2 $x1 $y1 $x2 $y2">&7
 
 	echo "INIT $boardSize $turnsNumber 1 $x1 $y1 $x2 $y2">&3
+
 	echo "INIT $boardSize $turnsNumber 2 $x1 $y1 $x2 $y2">&5
 
 	while true; do
-		while read s <&4; do
+		while (ps -p $pid1 > /dev/null) && (ps -p $pid2 > /dev/null) && read s <&4; do
 			echo $s >&7
 			echo $s >&5
-			echo $s >> ai2.input
 			sleep $timeLimit
 			if [[ "$s" == "END_TURN" ]]; then
 				break
 			fi
-
-			if !(ps -p $pid2 > /dev/null); then
-				break
-			fi 
 		done
-		while read s <&6; do
+		while (ps -p $pid1 > /dev/null) && (ps -p $pid2 > /dev/null) && read s <&6; do
 			echo $s >&3
 			echo $s >&7
-			echo $s >> ai1.input
 			sleep $timeLimit
 			if [[ "$s" == "END_TURN" ]]; then
 				break
 			fi
-
-			if !(ps -p $pid1 > /dev/null); then
-				break
-			fi 
-
 		done
 
 		if !(ps -p $pid1 > /dev/null); then
-			wait $pid1
-			ret=$?
-			echo 1 dead
 			break
 		fi 
 
 		if !(ps -p $pid2 > /dev/null); then
-			wait $pid2
-			ret=$?
-			echo 2 dead
 			break
 		fi 
 	done
-	
-	kill $pid1
-	kill $pid2
-	kill $pid_gui
 
-	if [[ "$ret" == "" ]]; then
+	wait $pid1
+	ai1_ret=$?
+	wait $pid2
+	ai2_ret=$?
+	wait $pid_gui
+	gui_ret=$?
+
+	if [[ "$ai1_ret" == "" ]]; then
 		exit 1
 	fi
 
-	if [[ $ret -gt 2 ]]; then
+	if [[ $ai1_ret -gt 2 ]]; then
+		exit 1
+	fi
+
+	if [[ "$ai2_ret" == "" ]]; then
+		exit 1
+	fi
+
+	if [[ $ai2_ret -gt 2 ]]; then
+		exit 1
+	fi
+		
+	if [[ "$gui_ret" == "" ]]; then
+		exit 1
+	fi
+	
+	if [[ $gui_ret -ne 0 ]]; then
 		exit 1
 	fi
 	
@@ -260,44 +261,41 @@ elif [[ "$ai1" != "" && "$ai2" == "" ]]; then
 	echo "INIT $boardSize $turnsNumber 1 $x1 $y1 $x2 $y2">&3
 
 	while true; do
-		while read s <&4; do
+		while (ps -p $pid1 > /dev/null) && read s <&4; do
 			echo $s >&7
 			if [[ "$s" == "END_TURN" ]]; then
 				break
 			fi
-			if !(ps -p $pid1 > /dev/null); then
-				break
-			fi 
 		done
 		while read s <&8; do
 			echo $s >&3
-
 			if [[ "$s" == "END_TURN" ]]; then
 				break
 			fi
-
-			if !(ps -p $pid1 > /dev/null); then
-				break
-			break
-		fi 
-
 		done
 
 		if !(ps -p $pid1 > /dev/null); then
-			wait $pid1
-			ret=$?
 			break
 		fi 
 	done
 
-	kill $pid1
-	kill $pid_gui
-
-	if [[ "$ret" == "" ]]; then
+	wait $pid1
+	ai1_ret=$?
+	wait $pid_gui
+	gui_ret=$?
+	if [[ "$ai_ret" == "" ]]; then
 		exit 1
 	fi
 
-	if [[ $ret -gt 2 ]]; then
+	if [[ $ai_ret -gt 2 ]]; then
+		exit 1
+	fi
+
+	if [[ "$gui_ret" == "" ]]; then
+		exit 1
+	fi
+	
+	if [[ $gui_ret -ne 0 ]]; then
 		exit 1
 	fi
 	
@@ -305,10 +303,10 @@ elif [[ "$ai1" != "" && "$ai2" == "" ]]; then
 
 elif [[ "$ai1" == "" && "$ai2" != "" ]]; then
 	./$ai2 <&5 >&6 2> /dev/null &
-	pid2=$!
+	pid2=$?
 
 	$GUI_PATH -human1 <&7 >&8 &
-	pid_gui=$!
+	pid_gui=$?
 
 	echo "INIT $boardSize $turnsNumber 1 $x1 $y1 $x2 $y2">&7
 	echo "INIT $boardSize $turnsNumber 2 $x1 $y1 $x2 $y2">&7
@@ -316,45 +314,44 @@ elif [[ "$ai1" == "" && "$ai2" != "" ]]; then
 	echo "INIT $boardSize $turnsNumber 2 $x1 $y1 $x2 $y2">&5
 
 	while true; do
-		echo human
-		while read s <&8; do
+		while (ps -p $pid2 > /dev/null) && read s <&8; do
 			echo $s >&5
 			if [[ "$s" == "END_TURN" ]]; then
 				break
 			fi
-
-			if !(ps -p $pid2 > /dev/null); then
-				break
-			fi 
 		done
 
-		echo mock
 		while read s <&6; do
 			echo $s >&7
 			if [[ "$s" == "END_TURN" ]]; then
 				break
 			fi
-			if !(ps -p $pid2 > /dev/null); then
-				break
-			fi 
 		done
 
-	
 		if !(ps -p $pid2 > /dev/null); then
-			wait $pid2
-			ret=$?
 			break
 		fi 
 	done
 
-	kill $pid2	
-	kill $pid_gui
+	wait $pid2
+	ai2_ret=$?
 
-	if [[ "$ret" == "" ]]; then
+	wait $pid_gui
+	gui_ret=$?
+
+	if [[ "$ai2_ret" == "" ]]; then
 		exit 1
 	fi
 
-	if [[ $ret -gt 2 ]]; then
+	if [[ $ai2_ret -gt 2 ]]; then
+		exit 1
+	fi
+
+	if [[ "$gui_ret" == "" ]]; then
+		exit 1
+	fi
+	
+	if [[ $gui_ret -ne 0 ]]; then
 		exit 1
 	fi
 	
