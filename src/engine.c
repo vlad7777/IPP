@@ -69,8 +69,8 @@ typedef struct def_Board {
 	PiecesList **hashBuckets; ///<hash buckets array for holding information about pieces
 	int currentMove; ///< number of the current move
 	int currentPlayer;///< number of the current player
-	int isFirstPlayerInitialized; ///< 1 if INIT was called for the first player, 0 otherwise
-	int isSecondPlayerInitialized; ///< 1 if INIT was called for the second player, 0 otherwise
+	int aiPlayer;///< number under which ai is playing 
+	int isInitialized;///< 1 if the board was initialized, 0 otherwise
 	int isFirstKingDead; ///< 1 if the first king was killed, 0 otherwise
 	int isSecondKingDead; ///< 1 if the second king was killed, 0 otherwise
 
@@ -90,8 +90,8 @@ Board* constructBoard()
 	ret->currentPlayer = 1;
 	ret->isSecondKingDead = 0;
 	ret->isFirstKingDead = 0;
-	ret->isSecondPlayerInitialized = 0;
-	ret->isFirstPlayerInitialized = 0;
+	ret->aiPlayer = 0;
+	ret->isInitialized = 0;
 	return ret;
 }
 
@@ -169,7 +169,7 @@ int isInitialized()
 {
 	if (board == 0)
 		return 0;
-	if (!board->isFirstPlayerInitialized || !board->isSecondPlayerInitialized)
+	if (!board->isInitialized)
 		return 0;
 	return 1;
 }
@@ -185,6 +185,19 @@ int isGameOver()
 	if (board->currentMove > board->maxMoves)
 		return 1;
 	if (board->isFirstKingDead || board->isSecondKingDead)
+		return 1;
+	return 0;
+}
+
+/**
+ * function that checks whether ai is in charge of the current turn
+ * @return 1 if it's ai's turn, 0 otherwise
+ */
+int isMyTurn()
+{
+	if (isGameOver())
+		return 0;
+	if (board->aiPlayer == board->currentPlayer)
 		return 1;
 	return 0;
 }
@@ -436,45 +449,18 @@ int init(int n, int k, int p, int x1, int y1, int x2, int y2)
 		return 0;
 	if (p <= 0 || p > 2)
 		return 0;
-	if (p == 1)
-	{
-		if (board->isFirstPlayerInitialized)
-			return 0;
-		else
-			board->isFirstPlayerInitialized = 1;
-	}
-	else if (p == 2)
-	{
-		if (board->isSecondPlayerInitialized)
-			return 0;
-		else
-			board->isSecondPlayerInitialized = 1;
-	}
 
-	if (board->size == -1)
-	{
-		board->size = n;
-		board->maxMoves = k;
-		if (!setupLine(x1, y1, 1))
-			return 0;
+	board->isInitialized = 1;
+	board->aiPlayer = p;
 
-		if (!setupLine(x2, y2, 2))
-			return 0;
-	}
-	else 
-	{
-		if (board->size != n)
-			return 0;
+	board->size = n;
+	board->maxMoves = k;
+	if (!setupLine(x1, y1, 1))
+		return 0;
 
-		if (board->maxMoves != k)
-			return 0;
+	if (!setupLine(x2, y2, 2))
+		return 0;
 
-		if (!checkSetupLine(x1, y1, 1))
-			return 0;
-
-		if (!checkSetupLine(x2, y2, 2))
-			return 0;
-	}
 	return 1;
 }
 
@@ -626,11 +612,19 @@ int end_game()
 {
 	int ret;
 	if (board->isSecondKingDead && !board->isFirstKingDead)
-		ret = 1;
+		ret = 0;
 	else if (!board->isSecondKingDead && board->isFirstKingDead)
 		ret = 2;
 	else
-		ret = 0;
+		ret = 1;
+
+	if (board->aiPlayer == 2)
+	{
+		if (ret == 0)
+			ret = 2;
+		else if (ret == 2)
+			ret = 0;
+	}
 	destructBoard();
 	return ret;
 }

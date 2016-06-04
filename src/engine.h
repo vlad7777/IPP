@@ -22,6 +22,11 @@ int end_game();
 int isGameOver();
 
 /**
+ * @brief function that checks whether it is ai's turn
+ */
+int isMyTurn();
+
+/**
  * @brief Initializes a game with size of a board, number of rounds and positions of kings.
  * @param n size of the board
  * @param k max number of moves per player
