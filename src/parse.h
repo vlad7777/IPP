@@ -26,4 +26,6 @@ typedef struct def_command {
  */
 command* parse_command(char *str);
 
+void print_command(command *c);
+
 #endif /* PARSE_H */

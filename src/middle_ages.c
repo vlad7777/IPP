@@ -112,7 +112,6 @@ int main() {
 			puts("END_TURN");
 			end_turn();
 			fflush(stdout);
-			fflush(stderr);
 		}
 	}
 

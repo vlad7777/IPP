@@ -1,8 +1,5 @@
 #!/bin/bash
 
-rm ai1.input
-rm ai2.input
-
 GUI_PATH=./sredniowiecze_gui_with_libs.sh
 
 boardSize=10
@@ -70,7 +67,6 @@ do
 			;;
 		-ai1)
 			shift
-			echo $1
 			if ! [[ -f $1 ]]; then
 				exit 1
 			fi
@@ -78,7 +74,6 @@ do
 			;;
 		-ai2)
 			shift
-			echo $1
 			if ! [[ -f $1 ]]; then
 				exit 1
 			fi
@@ -140,8 +135,6 @@ else
 	fi
 fi
 
-echo $x1 $y1 $x2 $y2
-
 PIPE=$(mktemp -u)
 mkfifo $PIPE
 exec 3<>$PIPE
@@ -181,7 +174,6 @@ if [[ "$ai1" == "" && "$ai2" == "" ]]; then
 
 	wait $pid_gui
 	gui_ret=$?
-	echo gui_ret
 	if [[ "$gui_ret" == "" ]]; then
 		exit 1
 	fi
@@ -196,12 +188,8 @@ elif [[ "$ai1" != "" && "$ai2" != "" ]]; then
 	$ai1 <&3 >&4 &
 	pid1=$!
 
-	echo pid1 $pid1
-
 	$ai2 <&5 >&6 2> /dev/null &
 	pid2=$!
-
-	echo pid2 $pid2
 
 	$GUI_PATH <&7 >&8 &
 	pid_gui=$!
@@ -213,7 +201,6 @@ elif [[ "$ai1" != "" && "$ai2" != "" ]]; then
 	echo "INIT $boardSize $turnsNumber 2 $x1 $y1 $x2 $y2">&5
 
 	while true; do
-		echo 1
 		while true; do
 
 			flag=0
@@ -232,16 +219,13 @@ elif [[ "$ai1" != "" && "$ai2" != "" ]]; then
 				break;
 			fi
 
-			echo $s
 			echo $s >&7
 			echo $s >&5
-			echo $s >> ai2.input
 			sleep $timeLimit
 			if [[ "$s" == "END_TURN" ]]; then
 				break
 			fi
 		done
-		echo 2
 		while true; do
 			flag=0
 			while true; do
@@ -258,10 +242,8 @@ elif [[ "$ai1" != "" && "$ai2" != "" ]]; then
 			if [[ $flag -eq 1 ]]; then
 				break;
 			fi
-			echo $s
 			echo $s >&3
 			echo $s >&7
-			echo $s >> ai1.input
 			sleep $timeLimit
 			if [[ "$s" == "END_TURN" ]]; then
 				break
@@ -283,14 +265,13 @@ elif [[ "$ai1" != "" && "$ai2" != "" ]]; then
 			wait $pid2
 			ret2=$?
 
-			echo both dead
 			break
 		fi 
 	done
 	
-	kill $pid1
-	kill $pid2
-	kill $pid_gui
+	kill $pid1 > /dev/null 2> /dev/null
+	kill $pid2 > /dev/null 2> /dev/null
+	kill $pid_gui > /dev/null 2> /dev/null
 
 	if [[ "$retg" != "" ]] && [[ $retg -gt 0 ]]; then
 		exit 1
@@ -326,7 +307,6 @@ elif [[ "$ai1" != "" && "$ai2" == "" ]]; then
 	echo "INIT $boardSize $turnsNumber 1 $x1 $y1 $x2 $y2">&3
 
 	while true; do
-		echo 1
 		while true; do
 			flag=0
 			while true; do
@@ -343,7 +323,6 @@ elif [[ "$ai1" != "" && "$ai2" == "" ]]; then
 			if [[ $flag -eq 1 ]]; then
 				break;
 			fi
-			echo $s
 			echo $s >&7
 			echo $s >> ai2.input
 			sleep $timeLimit
@@ -382,8 +361,8 @@ elif [[ "$ai1" != "" && "$ai2" == "" ]]; then
 		fi 
 	done
 
-	kill $pid1
-	kill $pid_gui
+	kill $pid1 > /dev/null 2> /dev/null
+	kill $pid_gui > /dev/null 2> /dev/null
 
 	if [[ "$ret" == "" ]]; then
 		exit 1
@@ -408,7 +387,6 @@ elif [[ "$ai1" == "" && "$ai2" != "" ]]; then
 	echo "INIT $boardSize $turnsNumber 2 $x1 $y1 $x2 $y2">&5
 
 	while true; do
-		echo human
 		while true; do
 			flag=0
 			while true; do
@@ -431,7 +409,6 @@ elif [[ "$ai1" == "" && "$ai2" != "" ]]; then
 			fi
 		done
 
-		echo mock
 		while true; do
 			flag=0
 			while true; do
@@ -461,8 +438,8 @@ elif [[ "$ai1" == "" && "$ai2" != "" ]]; then
 		fi 
 	done
 
-	kill $pid2	
-	kill $pid_gui
+	kill $pid2	 > /dev/null 2> /dev/null
+	kill $pid_gui > /dev/null 2> /dev/null
 
 	if [[ "$ret" == "" ]]; then
 		exit 1
